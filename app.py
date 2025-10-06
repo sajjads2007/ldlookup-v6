@@ -20,7 +20,7 @@ import pdfplumber
 from docx import Document
 
 # ------------- Page & Styles -------------
-BG_DARK = "#0B132B"          # page background (kept)
+BG_DARK = "#0960AC"          # page background (kept)
 HEADER = "#0960AC"           # requested header color
 VERSION = "6.0.2"
 
@@ -45,7 +45,7 @@ st.markdown(
           display: flex; align-items: center; gap: 14px;
       }}
       .topbar h1 {{ margin: 0; font-size: 22px; color: #fff; }}
-      .disclaimer {{ color:#E8EEF6; font-size:.92rem; margin:4px 0 0 0; }}
+      .disclaimer {{ color:#0960AC; font-size:.92rem; margin:4px 0 0 0; }}
       .tbl table {{ border-collapse: collapse; width: 100%; }}
       .tbl th, .tbl td {{ border: 1px solid #e6e6e6; padding: 8px; vertical-align: middle; font-size: .92rem; }}
       .tbl th {{ background: #f6f7fb; color: {BG_DARK}; text-align: left; }}
@@ -272,3 +272,4 @@ with tab_audit:
         else:
             open_modal_if_requested()
             render_table(final_list)
+
