@@ -49,7 +49,7 @@ st.markdown(
       .tbl table {{ border-collapse: collapse; width: 100%; }}
       .tbl th, .tbl td {{ border: 1px solid #e6e6e6; padding: 8px; vertical-align: middle; font-size: .92rem; }}
       .tbl th {{ background: #f6f7fb; color: {BG_DARK}; text-align: left; }}
-      .thumb {{
+      '''. {{
           height: 100px; width: auto; object-fit: contain; border-radius: 6px;
           border: 1px solid #e6e6e6; background: #fff;
       }}
@@ -58,8 +58,8 @@ st.markdown(
       .muted {{ color:#6b7280; font-size:.9rem; }}
       @media (max-width: 640px) {{
         .tbl th, .tbl td {{ font-size: .88rem; }}
-        .thumb {{ height: 96px; }}
-      }}
+        . {{ height: 96px; }}
+      }}'''
       /* Hide drag-hint (even though we removed uploader) */
       div[data-testid="stFileUploadDropzone"] small {{ display:none; }}
     </style>
@@ -160,7 +160,7 @@ def render_table(l_numbers: List[str]) -> None:
     for l in l_numbers:
         url = build_image_url(l)
         href = f"?preview={quote_plus(url)}"
-        img_cell = f'<a href="{href}" title="Preview {l}"><img class="thumb" src="{url}" alt="{l}"></a>'
+        img_cell = f'<a href="{href}" title="Preview {l}"><img class="" src="{url}" alt="{l}"></a>'
         rows.append(f"<tr><td>{l}</td><td>{img_cell}</td></tr>")
     st.markdown(
         f"""
@@ -291,6 +291,7 @@ with tab_audit:
         else:
             open_modal_if_requested()
             render_table(final_list)
+
 
 
 
