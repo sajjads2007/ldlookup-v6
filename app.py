@@ -49,7 +49,7 @@ st.markdown(
       .tbl table {{ border-collapse: collapse; width: 100%; }}
       .tbl th, .tbl td {{ border: 1px solid #e6e6e6; padding: 8px; vertical-align: middle; font-size: .92rem; }}
       .tbl th {{ background: #f6f7fb; color: {BG_DARK}; text-align: left; }}
-      . {{
+      '''. {{
           height: 100px; width: auto; object-fit: contain; border-radius: 6px;
           border: 1px solid #e6e6e6; background: #fff;
       }}
@@ -59,7 +59,7 @@ st.markdown(
       @media (max-width: 640px) {{
         .tbl th, .tbl td {{ font-size: .88rem; }}
         . {{ height: 96px; }}
-      }}
+      }}'''
       /* Hide drag-hint (even though we removed uploader) */
       div[data-testid="stFileUploadDropzone"] small {{ display:none; }}
     </style>
@@ -291,6 +291,7 @@ with tab_audit:
         else:
             open_modal_if_requested()
             render_table(final_list)
+
 
 
 
