@@ -93,9 +93,9 @@ CDN_TEMPLATE = "https://cdn-tp2.mozu.com/28945-m4/cms/files/{L}.jpg?w={w}&q={q}"
 RE_LNUM = re.compile(r"\bL\d+\b", flags=re.IGNORECASE)
 RE_BARE7 = re.compile(r"\b(\d{7})\b")
 
-'''def build_image_url(l_number: str, width=IMG_WIDTH, quality=IMG_QUALITY) -> str:
+def build_image_url(l_number: str, width=IMG_WIDTH, quality=IMG_QUALITY) -> str:
     l = str(l_number).strip().upper()
-    return CDN_TEMPLATE.format(L=l, w=width, q=quality)'''
+    return CDN_TEMPLATE.format(L=l, w=width, q=quality)
 
 def extract_lnumbers_from_text_with_correction(text: str) -> Tuple[List[str], List[str]]:
     """
@@ -291,6 +291,7 @@ with tab_audit:
         else:
             open_modal_if_requested()
             render_table(final_list)
+
 
 
 
