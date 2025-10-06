@@ -1,27 +1,20 @@
-# LD Lookup — Version 6.0.2 (Lookup & Audit, camera + OCR.space)
+# LD Lookup — Version 6.0.2.2 (Lookup & Audit, camera + OCR.space)
 # - Item lookup: single code + Find/Clear
 # - Audit: camera photo + one editable text area; auto-fix 7-digit -> Lxxxxxxx; highlight corrections
-# - Table: LNumber + Image (100px clickable thumb → modal)
+# - Table: LNumber + Image (100px clickable thumb → opens raw image source in new tab)
 # - Header color = #0960AC; LD logo from repo root (Ld-logo.png)
 # - OCR: uses OCR.space API via Streamlit secrets (OCRSPACE_API_KEY)
 
-import io
 import re
-from pathlib import Path
 from typing import List, Tuple
-from urllib.parse import quote_plus, unquote_plus
 
-import pandas as pd
+import pandas as pd  # (kept in case you expand later)
 import requests
 import streamlit as st
 
-# Optional readers for text PDFs / DOCX (still useful if you later re-enable files)
-import pdfplumber
-from docx import Document
-
 # ------------- Page & Styles -------------
-BG_DARK = "#0960AC"          # page background (kept)
-HEADER = "#0960AC"           # requested header color
+BG_DARK = "#0960AC"          # page background
+HEADER = "#0960AC"           # header color
 VERSION = "6.0.2"
 
 st.set_page_config(page_title=f"LD Lookup v{VERSION}", page_icon="🧾", layout="wide")
@@ -49,7 +42,7 @@ st.markdown(
       .tbl table {{ border-collapse: collapse; width: 100%; }}
       .tbl th, .tbl td {{ border: 1px solid #e6e6e6; padding: 8px; vertical-align: middle; font-size: .92rem; }}
       .tbl th {{ background: #f6f7fb; color: {BG_DARK}; text-align: left; }}
-      . {{
+      .thumb {{
           height: 100px; width: auto; object-fit: contain; border-radius: 6px;
           border: 1px solid #e6e6e6; background: #fff;
       }}
@@ -58,10 +51,8 @@ st.markdown(
       .muted {{ color:#6b7280; font-size:.9rem; }}
       @media (max-width: 640px) {{
         .tbl th, .tbl td {{ font-size: .88rem; }}
-        . {{ height: 96px; }}
+        .thumb {{ height: 96px; }}
       }}
-      /* Hide drag-hint (even though we removed uploader) */
-      div[data-testid="stFileUploadDropzone"] small {{ display:none; }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -73,7 +64,7 @@ with logo_col:
     try:
         st.image("Ld-logo.png", use_column_width=True)
     except Exception:
-        pass  # logo is optional; app still runs if image missing
+        pass  # logo optional
 with title_col:
     st.markdown(
         f"""
@@ -127,19 +118,15 @@ def extract_lnumbers_from_text_with_correction(text: str) -> Tuple[List[str], Li
                 corr_out.append(x)
     return out, corr_out
 
-# ---- OCR.space fallback (no Tesseract needed) ----
-def _ocrspace_bytes(image_bytes: bytes, is_pdf: bool = False) -> str:
+# OCR.space (for Audit camera input)
+def _ocrspace_bytes(image_bytes: bytes) -> str:
     api_key = st.secrets.get("OCRSPACE_API_KEY")
     if not api_key:
         return ""
     try:
         endpoint = "https://api.ocr.space/parse/image"
-        files = {"file": ("upload.pdf" if is_pdf else "upload.png", image_bytes)}
-        data = {
-            "isOverlayRequired": "false",
-            "language": "eng",
-            "scale": "true",
-        }
+        files = {"file": ("upload.png", image_bytes)}
+        data = {"isOverlayRequired": "false", "language": "eng", "scale": "true"}
         headers = {"apikey": api_key}
         r = requests.post(endpoint, headers=headers, data=data, files=files, timeout=30)
         r.raise_for_status()
@@ -150,17 +137,17 @@ def _ocrspace_bytes(image_bytes: bytes, is_pdf: bool = False) -> str:
     except Exception:
         return ""
 
-def ocr_bytes_to_text(b: bytes) -> str:
-    # Always use OCR.space here (camera supplies images)
-    return _ocrspace_bytes(b, is_pdf=False)
-
 # ---- Rendering helpers ----
 def render_table(l_numbers: List[str]) -> None:
+    """Render a table: LNumber + clickable 100px thumbnail that opens the raw image source."""
     rows = []
     for l in l_numbers:
         url = build_image_url(l)
-        href = f"?preview={quote_plus(url)}"
-        img_cell = f'<a href="{href}" title="Preview {l}"><img class="" src="{url}" alt="{l}"></a>'
+        img_cell = (
+            f'<a href="{url}" target="_blank" rel="noopener noreferrer" '
+            f'title="Open full-size image">'
+            f'<img class="thumb" src="{url}" alt="{l}"></a>'
+        )
         rows.append(f"<tr><td>{l}</td><td>{img_cell}</td></tr>")
     st.markdown(
         f"""
@@ -174,22 +161,9 @@ def render_table(l_numbers: List[str]) -> None:
         unsafe_allow_html=True,
     )
 
-def open_modal_if_requested():
-    qp = st.query_params
-    if "preview" in qp:
-        preview_url = unquote_plus(qp.get("preview"))
-        with st.modal("Preview", key="img_modal"):
-            st.image(preview_url, use_column_width=True)
-            if st.button("Close"):
-                st.query_params.clear()
-                st.rerun()
-
 def clear_lookup_callback():
-    # wipe the input, close any open preview modal, and rerun cleanly
     st.session_state["lookup_input"] = ""
-    st.query_params.clear()
     st.rerun()
-
 
 # ------------- Tabs -------------
 tab_lookup, tab_audit = st.tabs(["Item lookup", "Audit"])
@@ -203,13 +177,13 @@ with tab_lookup:
             "Enter LD Number",
             max_chars=16,
             placeholder="L1304179 or 1304179",
-            key="lookup_input",                     # ← give the input a stable key
+            key="lookup_input",
         )
     with col2:
         find_clicked = st.button("Find", type="primary", key="lookup_find_btn")
     with col3:
         st.button("Clear", type="secondary", key="lookup_clear_btn",
-                  on_click=clear_lookup_callback)   # ← use the callback
+                  on_click=clear_lookup_callback)
 
     lnums: List[str] = []
     fixed: List[str] = []
@@ -221,7 +195,7 @@ with tab_lookup:
             lnums = [found[0]]  # single check
             fixed = corrected
         else:
-            st.warning("No valid LD Nnumber found.")
+            st.warning("No valid LD number found.")
 
     if lnums:
         if lnums[0] in fixed:
@@ -234,9 +208,7 @@ with tab_lookup:
                 f"<div class='muted'>Detected → <span class='chip'>{lnums[0]}</span></div>",
                 unsafe_allow_html=True,
             )
-        open_modal_if_requested()
         render_table(lnums)
-
 
 # ===== Tab 2: Audit (camera + one text area) =====
 with tab_audit:
@@ -244,11 +216,9 @@ with tab_audit:
     c1, c2 = st.columns([1.1, 1])
 
     with c1:
-        # Camera-only input (no file uploader)
         camera_img = st.camera_input("Take a picture of a list (optional)")
 
     with c2:
-        # Single combined text area (both paste & edit)
         combined_text = st.text_area(
             "Paste/edit L-numbers (any separators). I’ll try to also read from the camera photo if provided.",
             height=220,
@@ -261,7 +231,7 @@ with tab_audit:
         raw_text_parts.append(combined_text)
 
     if camera_img is not None:
-        txt = ocr_bytes_to_text(camera_img.getvalue())
+        txt = _ocrspace_bytes(camera_img.getvalue())
         if txt:
             raw_text_parts.append(txt)
 
@@ -274,11 +244,15 @@ with tab_audit:
         lnums_bulk = extracted
         fixed_bulk = corrected
 
-    # Show what we detected (same single field for edits)
+    # Prefill single field (if user didn't type yet)
     detected_default = " ".join(lnums_bulk) if not combined_text.strip() else combined_text
-    edited_text = st.text_area("Edit the final list here, then run:", value=detected_default, height=120, key="audit_final_list")
+    edited_text = st.text_area(
+        "Edit the final list here, then run:",
+        value=detected_default,
+        height=120,
+        key="audit_final_list"
+    )
 
-    # Highlight corrections
     if fixed_bulk:
         chips = "".join([f"<span class='chip fixed'>{x}</span>" for x in fixed_bulk])
         st.markdown(f"<div class='muted'>Auto-corrected from 7 digits → {chips}</div>", unsafe_allow_html=True)
@@ -289,18 +263,4 @@ with tab_audit:
         if not final_list:
             st.warning("No L-numbers to process after edits.")
         else:
-            open_modal_if_requested()
             render_table(final_list)
-
-
-
-
-
-
-
-
-
-
-
-
-
