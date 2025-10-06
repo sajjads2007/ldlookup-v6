@@ -175,7 +175,7 @@ with tab_lookup:
     with col1:
         user_input = st.text_input(
             "Enter LD Number",
-            max_chars=16,
+            max_chars=8,
             placeholder="L1304179 or 1304179",
             key="lookup_input",
         )
@@ -264,3 +264,4 @@ with tab_audit:
             st.warning("No L-numbers to process after edits.")
         else:
             render_table(final_list)
+
