@@ -184,39 +184,59 @@ def open_modal_if_requested():
                 st.query_params.clear()
                 st.rerun()
 
+def clear_lookup_callback():
+    # wipe the input, close any open preview modal, and rerun cleanly
+    st.session_state["lookup_input"] = ""
+    st.query_params.clear()
+    st.rerun()
+
+
 # ------------- Tabs -------------
 tab_lookup, tab_audit = st.tabs(["Item lookup", "Audit"])
 
 # ===== Tab 1: Item lookup =====
 with tab_lookup:
-    c1, c2, c3 = st.columns([2,1,1])
-    with c1:
-        user_input = st.text_input("Enter LD Number", max_chars=16, placeholder="L1304179 or 1304179")
-    with c2:
-        find_clicked = st.button("Find", type="primary")
-    with c3:
-        clear_clicked = st.button("Clear")
+    col1, col2, col3 = st.columns([2, 1, 1])
 
-    if clear_clicked:
-        st.experimental_rerun()
+    with col1:
+        user_input = st.text_input(
+            "Enter LD Number",
+            max_chars=16,
+            placeholder="L1304179 or 1304179",
+            key="lookup_input",                     # ← give the input a stable key
+        )
+    with col2:
+        find_clicked = st.button("Find", type="primary", key="lookup_find_btn")
+    with col3:
+        st.button("Clear", type="secondary", key="lookup_clear_btn",
+                  on_click=clear_lookup_callback)   # ← use the callback
 
     lnums: List[str] = []
     fixed: List[str] = []
-    if find_clicked and user_input.strip():
-        found, corrected = extract_lnumbers_from_text_with_correction(user_input.strip())
+    if find_clicked and st.session_state["lookup_input"].strip():
+        found, corrected = extract_lnumbers_from_text_with_correction(
+            st.session_state["lookup_input"].strip()
+        )
         if found:
             lnums = [found[0]]  # single check
             fixed = corrected
         else:
-            st.warning("No valid L-number found.")
+            st.warning("No valid LD Nnumber found.")
 
     if lnums:
         if lnums[0] in fixed:
-            st.markdown(f"<div class='muted'>Corrected → <span class='chip fixed'>{lnums[0]}</span></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='muted'>Corrected → <span class='chip fixed'>{lnums[0]}</span></div>",
+                unsafe_allow_html=True,
+            )
         else:
-            st.markdown(f"<div class='muted'>Detected → <span class='chip'>{lnums[0]}</span></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div class='muted'>Detected → <span class='chip'>{lnums[0]}</span></div>",
+                unsafe_allow_html=True,
+            )
         open_modal_if_requested()
         render_table(lnums)
+
 
 # ===== Tab 2: Audit (camera + one text area) =====
 with tab_audit:
@@ -271,6 +291,7 @@ with tab_audit:
         else:
             open_modal_if_requested()
             render_table(final_list)
+
 
 
 
