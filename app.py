@@ -189,10 +189,9 @@ tab_lookup, tab_audit = st.tabs(["Item lookup", "Audit"])
 
 # ===== Tab 1: Item lookup =====
 with tab_lookup:
-    #st.caption("Enter a single code. If you type 7 digits (e.g., 1304179), I’ll treat it as L1304179.")
     c1, c2, c3 = st.columns([2,1,1])
     with c1:
-        user_input = st.text_input("L-number", max_chars=16, placeholder="L1304179 or 1304179")
+        user_input = st.text_input("Enet LD Number", max_chars=16, placeholder="L1304179 or 1304179")
     with c2:
         find_clicked = st.button("Find", type="primary")
     with c3:
@@ -272,5 +271,6 @@ with tab_audit:
         else:
             open_modal_if_requested()
             render_table(final_list)
+
 
 
