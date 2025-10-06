@@ -174,7 +174,7 @@ def render_table(l_numbers: List[str]) -> None:
         unsafe_allow_html=True,
     )
 
-def open_modal_if_requested():
+'''def open_modal_if_requested():
     qp = st.query_params
     if "preview" in qp:
         preview_url = unquote_plus(qp.get("preview"))
@@ -182,7 +182,7 @@ def open_modal_if_requested():
             st.image(preview_url, use_column_width=True)
             if st.button("Close"):
                 st.query_params.clear()
-                st.rerun()
+                st.rerun()'''
 
 def clear_lookup_callback():
     # wipe the input, close any open preview modal, and rerun cleanly
@@ -291,6 +291,7 @@ with tab_audit:
         else:
             open_modal_if_requested()
             render_table(final_list)
+
 
 
 
