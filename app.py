@@ -218,11 +218,11 @@ with tab_audit:
     with c1:
         camera_img = st.camera_input("Take a picture of a list (optional)")
 
-    '''with c2:
+    with c2:
         combined_text = st.text_area(
             "Paste/edit L-numbers (any separators). I’ll try to also read from the camera photo if provided.",
             height=220,
-            key="audit_combined_text",'''
+            key="audit_combined_text",
         )
 
     # Collect text: camera OCR + typed/pasted
@@ -264,5 +264,6 @@ with tab_audit:
             st.warning("No L-numbers to process after edits.")
         else:
             render_table(final_list)
+
 
 
